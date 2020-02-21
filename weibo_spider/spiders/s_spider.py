@@ -3,12 +3,14 @@ import scrapy
 import redis
 import json
 from weibo_spider.items import WeiboSpiderItem
-
+from weibo_spider.spiders.get_cookies import GetCookie
+from pathlib import Path
+import os
 
 class SSpiderSpider(scrapy.Spider):
     name = 's_spider'
-    allowed_domains = ['s.weibo.com']
-    start_urls = ['https://s.weibo.com/weibo?q=%E5%86%A0%E7%8A%B6%E7%97%85%E6%AF%92&Refer=topic_weibo']
+    allowed_domains = ['m.weibo.cn']
+    start_urls = ['https://m.weibo.cn/api/container/getIndex?containerid=100103type%3D1%26q%3D%E5%86%A0%E7%8A%B6%E7%97%85%E6%AF%92&page_type=searchall']
     redis_connection = redis.Redis(host='127.0.0.1', port=6379)
     
     # 网页微博登录后获取cookies并替换
@@ -21,14 +23,18 @@ class SSpiderSpider(scrapy.Spider):
         print(cookies)
         return cookies
 
+    def get_cookies_now(self):
+        cookies = GetCookie().simulator()
+        print(cookies)
+        return cookies
+
     def start_requests(self):
         url= self.start_urls[0]
-        cookies = self.get_cookies_from_redis()
-        return [scrapy.FormRequest(url, cookies = json.loads(cookies[0]), callback = self.parse)]
+        cookies = self.get_cookies_now()
+        return [scrapy.FormRequest(url, callback = self.parse, cookies=cookies)]
 
     def parse(self, response):
         content_list = response.xpath("//div[@class='card']")
-        print(content_list.text)
         for item in content_list:
             weibo_item = WeiboSpiderItem()
             weibo_item['user_name'] = item.xpath(".//a[@class='name']/text()").get()
