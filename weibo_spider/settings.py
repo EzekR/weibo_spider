@@ -25,7 +25,7 @@ DOWNLOAD_DELAY = 0.5
 
 USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.106 Safari/537.36'
 
-COOKIES_ENABLED = False
+COOKIES_ENABLED = True
 
 
 # Configure maximum concurrent requests performed by Scrapy (default: 16)

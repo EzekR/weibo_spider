@@ -10,13 +10,19 @@ import os
 class SSpiderSpider(scrapy.Spider):
     name = 's_spider'
     allowed_domains = ['m.weibo.cn']
-    start_urls = ['https://m.weibo.cn/api/container/getIndex?containerid=100103type%3D1%26q%3D%E5%86%A0%E7%8A%B6%E7%97%85%E6%AF%92&page_type=searchall']
+    start_urls = ['https://s.weibo.com/weibo/%25E7%2597%2585%25E6%25AF%2592?topnav=1&wvr=6&b=1']
     redis_connection = redis.Redis(host='127.0.0.1', port=6379)
     
     # 网页微博登录后获取cookies并替换
     # cookies_str = ''
-    # cookies = {'WEIBOCN_FROM': '1110106030', '_T_WM': '25607401384', 'SCF': 'Ajh8ojhSprfMrRVwugCif6ehSgsR_N-6H1x5wLCPYD_II8YBnVwV28rMswFD1qlIKfY3rP7BkFFbsAGOAiirPkc.', 'SSOLoginState': '1582001918', 'MLOGIN': '1', 'XSRF-TOKEN': '9309e2', 'M_WEIBOCN_PARAMS': 'uicode%3D20000174', 'SUHB': '0ElKF5YoiiJSAV', 'SUB': '_2A25zTx6uDeRhGeNI4lsV-SfNzD2IHXVQs6LmrDV6PUJbkdAKLUnbkW1NSBnUjTqUe6gpTrv06xmBLdCZtD3SIXPN'}
+    cookies = 'SINAGLOBAL=8487031505947.978.1579270889878; UOR=www.iqiyi.com,widget.weibo.com,login.sina.com.cn; wb_view_log=1680*10502; un=971640625@qq.com; wvr=6; wb_view_log_2192411200=1680*10502; Ugrow-G0=1ac418838b431e81ff2d99457147068c; SUBP=0033WrSXqPxfM725Ws9jqgMF55529P9D9WhOLz1SCzqpW9E0Rd3UdZVs5JpX5KMhUgL.Fozp1KzXeK2Eeh52dJLoI0YLxKqL1KnLB-qLxK.L1KzLBKqLxKML1hzLBo.LxKBLBonL12BLxKqL1KnLB-qLxKMLBK2LB-eLxKML1hzLBo.t; ALF=1613919412; SSOLoginState=1582383413; SCF=AvTgBgYggK293VebdtLE8S3ESHQHmVX3AffiV1G0abAVfPCegWzRByxeHxKgpEHV-whEEs97rKTRlaaR9sZ7sIU.; SUB=_2A25zVTFmDeRhGeRP4lAV8S_OyzyIHXVQIyWurDV8PUNbmtAfLWHWkW9NU-_4Cmc8I_NEdOAX0m0ugOtzuY8Csu9j; SUHB=0TPUOA8Z4iqU36; YF-V5-G0=3751b8b40efecee990eab49e8d3b3354; _s_tentry=login.sina.com.cn; Apache=5245110694653.634.1582383416591; ULV=1582383416619:6:4:4:5245110694653.634.1582383416591:1582255869779; YF-Page-G0=44cd1a20bfa82176cbec01176361dd13|1582383416|1582383416; webim_unReadCount=%7B%22time%22%3A1582383419128%2C%22dm_pub_total%22%3A0%2C%22chat_group_client%22%3A0%2C%22allcountNum%22%3A0%2C%22msgbox%22%3A0%7D'
 
+    def parse_cookie(self):
+        cookie_map = {}
+        for item in self.cookies.split('; '):
+            cookie_map[item.split('=')[0]] = item.split('=')[1]
+        return cookie_map
+        
     # 从redis获取由cookiespool生成的cookie
     def get_cookies_from_redis(self):
         cookies = self.redis_connection.hvals('cookies:weibo')
@@ -30,10 +36,12 @@ class SSpiderSpider(scrapy.Spider):
 
     def start_requests(self):
         url= self.start_urls[0]
-        cookies = self.get_cookies_now()
+        cookies = self.parse_cookie()
+        # cookies = self.get_cookies_now()
         return [scrapy.FormRequest(url, callback = self.parse, cookies=cookies)]
 
     def parse(self, response):
+        print(response.text)
         content_list = response.xpath("//div[@class='card']")
         for item in content_list:
             weibo_item = WeiboSpiderItem()
